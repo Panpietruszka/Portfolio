@@ -1,75 +1,64 @@
-# React + TypeScript + Vite
+# Piotr Zniszczoł: Portfolio
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Interaktywne portfolio w React i TypeScript, z animacjami sterowanymi scrollem, trójwymiarowym wirem technologii i backendem, który zbiera statystyki kodowania z CodeTime.
 
-Currently, two official plugins are available:
+## Co jest w środku
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Hero i „O mnie"**: tekst odsłaniany słowo po słowie (GSAP SplitText), płynny scroll (Lenis), własny kursor i przełącznik języka PL/EN.
+- **Wir technologii (Three.js)**: ikony narzędzi na helisie 3D sterowanej scrollem, z limitem prędkości animacji. Na końcu ikony lecą do docka.
+- **Dock w stylu macOS**: ikony powiększają się pod kursorem, a po najechaniu pojawia się podgląd w stylu okna z paska zadań Windows 11 z opisem narzędzia.
+- **Aktywność kodowania (w budowie)**: backend FastAPI pobiera dane z CodeTime, zapisuje je w Turso (SQLite), a panel w stylu dashboardu CodeTime powstaje w React.
 
-## React Compiler
+## Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Frontend: React, TypeScript, Vite, Tailwind CSS, GSAP, Lenis, Three.js, i18next
+- Backend: Python, FastAPI (Vercel Functions), Turso (hostowany SQLite)
+- Hosting: Vercel
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Struktura
 
 ```
-
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+api/        FastAPI: endpointy CodeTime (status, archiwum, ostatnie dni)
+scripts/    import i synchronizacja danych z CodeTime
+src/        aplikacja React (sekcje, komponenty, tłumaczenia, ikony)
+public/     zasoby statyczne
 ```
+
+## Uruchomienie lokalnie
+
+Frontend:
+
+```bash
+pnpm install
+pnpm dev
+```
+
+Backend (Windows PowerShell):
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirementsDev.txt
+Copy-Item .env.example .env
+python scripts/seedCodetime.py
+uvicorn api.index:app --reload --port 8000
+```
+
+Frontend w trybie developerskim przekierowuje `/api` na `http://localhost:8000`. Bez ustawionych zmiennych Turso backend używa lokalnego pliku SQLite (`local.db`).
+
+## Zmienne środowiskowe
+
+Skopiuj `.env.example` do `.env` (plik jest ignorowany przez Git) i uzupełnij:
+
+| Zmienna | Opis |
+|---|---|
+| `CODETIME_TOKEN` | token CodeTime (odczyt statystyk) |
+| `TURSO_DATABASE_URL` | adres bazy Turso (puste = lokalny `local.db`) |
+| `TURSO_AUTH_TOKEN` | token dostępu do bazy Turso |
+| `CODETIME_TZ` | strefa czasowa (domyślnie `Europe/Warsaw`) |
+| `SYNC_COOLDOWN_S` | minimalny odstęp między synchronizacjami (domyślnie 120) |
+| `ACTIVE_WINDOW_S` | jak długo po ostatnim zdarzeniu uznajemy, że koduję (domyślnie 300) |
+
+## Wdrożenie
+
+Projekt jest przygotowany pod Vercel: frontend buduje Vite, a `api/index.py` działa jako funkcja Pythona (reguła w `vercel.json`). Zmienne środowiskowe ustawia się w panelu projektu.
