@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #07070a;
+  --color-glass: rgb(255 255 255 / 0.04);
+  --color-glass-border: rgb(255 255 255 / 0.1);
+  --color-accent: #7c5cff;
+  --font-sans: "Inter Variable", system-ui, sans-serif;
+}
+
+html {
+  background: var(--color-ink);
+  color: #f4f4f6;
+}
+
+body {
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+@utility glass {
+  background: var(--color-glass);
+  border: 1px solid var(--color-glass-border);
+  backdrop-filter: blur(24px) saturate(140%);
+  box-shadow: 0 0 60px -20px color-mix(in srgb, var(--color-accent) 50%, transparent);
+}
+
+/* własny kursor tylko na urządzeniach z myszą */
+@media (pointer: fine) {
+
+  *,
+  *::before,
+  *::after {
+    cursor: none !important;
+  }
+}

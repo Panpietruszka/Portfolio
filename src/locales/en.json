@@ -1,0 +1,67 @@
+{
+  "hero": {
+    "eyebrow": "Full-stack developer",
+    "title": "I build digital products that look and feel world-class.",
+    "subtitle": "Frontend, backend and infrastructure, from idea to deployment."
+  },
+  "about": {
+    "title": "About me",
+    "body": "I'm Piotr, a developer working across every layer of an application. Day to day I build SkyCast, a weather and space data aggregator, alongside other full-stack projects.",
+    "facts": [
+      "Frontend, backend and infrastructure",
+      "SkyCast: web and mobile",
+      "Animation and polished interfaces"
+    ]
+  },
+  "vortex": {
+    "eyebrow": "Currently",
+    "title": "The technologies I work with every day"
+  },
+  "dock": {
+    "eyebrow": "What I work on",
+    "title": "My toolkit",
+    "hint": "Hover an icon",
+    "items": {
+      "vscode": {
+        "title": "Visual Studio Code",
+        "body": "My main environment for frontend and full-stack work: custom theme, shortcuts and extensions. This portfolio is built in it too.",
+        "tags": ["Frontend", "Full-stack", "Extensions"]
+      },
+      "pycharm": {
+        "title": "PyCharm",
+        "body": "My environment for Python projects: debugging, interpreters and working with databases.",
+        "tags": ["Python", "Debugging", "Backend"]
+      },
+      "python": {
+        "title": "Python",
+        "body": "Backend, automation and data processing.",
+        "tags": ["Backend", "Automation", "Data"]
+      },
+      "github": {
+        "title": "GitHub",
+        "body": "Code hosting and the history of my projects, this portfolio included. You'll find all repositories on the Panpietruszka profile.",
+        "tags": ["Repositories", "Projects", "History"]
+      },
+      "git": {
+        "title": "Git",
+        "body": "Precise change tracking: small, well-described commits and a readable project history.",
+        "tags": ["Commits", "Branches", "History"]
+      },
+      "vitejs": {
+        "title": "Vite",
+        "body": "A fast dev server and bundler that runs this portfolio.",
+        "tags": ["Bundler", "Dev server", "React"]
+      },
+      "react": {
+        "title": "React",
+        "body": "Interfaces built from components, including this portfolio with its scroll-driven animations.",
+        "tags": ["Components", "Hooks", "Animation"]
+      },
+      "typescript": {
+        "title": "TypeScript",
+        "body": "Typed code that catches bugs before they reach users. Used throughout this portfolio.",
+        "tags": ["Types", "Safety", "Frontend"]
+      }
+    }
+  }
+}

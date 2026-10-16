@@ -1,0 +1,67 @@
+{
+  "hero": {
+    "eyebrow": "Full-stack developer",
+    "title": "Tworzę produkty cyfrowe, które wyglądają i działają jak z najwyższej półki.",
+    "subtitle": "Frontend, backend i infrastruktura, od pomysłu po wdrożenie."
+  },
+  "about": {
+    "title": "O mnie",
+    "body": "Jestem Piotr, programista pracujący na wszystkich warstwach aplikacji. Na co dzień rozwijam SkyCast, agregator danych pogodowych i kosmicznych, a poza tym realizuję projekty full-stack.",
+    "facts": [
+      "Frontend, backend i infrastruktura",
+      "SkyCast: web i mobile",
+      "Animacje i dopracowane interfejsy"
+    ]
+  },
+  "vortex": {
+    "eyebrow": "Obecnie",
+    "title": "Technologie, z którymi pracuję na co dzień"
+  },
+  "dock": {
+    "eyebrow": "Czym się zajmuję",
+    "title": "Moje narzędzia",
+    "hint": "Najedź na ikonę",
+    "items": {
+      "vscode": {
+        "title": "Visual Studio Code",
+        "body": "Główne środowisko do pracy nad frontendem i full-stackiem: własny motyw, skróty i rozszerzenia. To w nim powstaje także to portfolio.",
+        "tags": ["Frontend", "Full-stack", "Rozszerzenia"]
+      },
+      "pycharm": {
+        "title": "PyCharm",
+        "body": "Środowisko do projektów w Pythonie: debugowanie, praca z interpreterami i bazami danych.",
+        "tags": ["Python", "Debugowanie", "Backend"]
+      },
+      "python": {
+        "title": "Python",
+        "body": "Backend, automatyzacja i przetwarzanie danych.",
+        "tags": ["Backend", "Automatyzacja", "Dane"]
+      },
+      "github": {
+        "title": "GitHub",
+        "body": "Hosting kodu i historia moich projektów, także tego portfolio. Wszystkie repozytoria znajdziesz na profilu Panpietruszka.",
+        "tags": ["Repozytoria", "Projekty", "Historia zmian"]
+      },
+      "git": {
+        "title": "Git",
+        "body": "Precyzyjne śledzenie zmian: małe, opisane commity i czytelna historia projektu.",
+        "tags": ["Commity", "Gałęzie", "Historia"]
+      },
+      "vitejs": {
+        "title": "Vite",
+        "body": "Szybki serwer deweloperski i bundler, na którym działa to portfolio.",
+        "tags": ["Bundler", "Dev server", "React"]
+      },
+      "react": {
+        "title": "React",
+        "body": "Interfejsy budowane z komponentów, także to portfolio z animacjami sterowanymi scrollem.",
+        "tags": ["Komponenty", "Hooki", "Animacje"]
+      },
+      "typescript": {
+        "title": "TypeScript",
+        "body": "Typowany kod, który wyłapuje błędy, zanim trafią do użytkownika. Użyty w całym tym portfolio.",
+        "tags": ["Typy", "Bezpieczeństwo", "Frontend"]
+      }
+    }
+  }
+}
