@@ -1,0 +1,41 @@
+name: CodeTime sync and backup
+
+on:
+  schedule:
+    - cron: "17 3 * * *" # codziennie ok. 03:17 UTC
+  workflow_dispatch: # ręczne uruchomienie z zakładki Actions
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install requests tzdata
+
+      - name: Sync last days
+        run: python scripts/seedCodetime.py --days 7
+        env:
+          CODETIME_TOKEN: ${{ secrets.CODETIME_TOKEN }}
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+
+      - name: Backup database
+        run: python scripts/backupDb.py
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: codetime-backup
+          path: backups/
+          retention-days: 90
