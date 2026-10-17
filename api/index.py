@@ -50,7 +50,7 @@ def codetime_status(response: Response) -> dict:
     except CodeTimeError:
         logger.exception("CodeTime status")
         raise HTTPException(status_code=502, detail="CodeTime niedostępny")
-    cache(response, 30, 60)
+    cache(response, 5, 10)
     return status
 
 

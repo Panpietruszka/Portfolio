@@ -96,15 +96,29 @@ def days_back(count: int) -> str:
 
 
 def get_status() -> dict:
-    """Czy teraz kodujesz? Wynik trzymany w pamięci przez kilkanaście sekund."""
+    """Czy teraz kodujesz?
+
+    latest-logs zwraca zdarzenie tylko przez kilkanaście sekund po jego wysłaniu,
+    więc ostatni zauważony czas zdarzenia zapamiętujemy w bazie (wspólnej dla
+    wszystkich instancji) i uznajemy, że kodujesz, jeszcze przez active_hold_s sekund.
+    """
     global _status_cache
+    settings = get_settings()
     now = time.time()
-    if _status_cache and now - _status_cache[0] < 20:
+    if _status_cache and now - _status_cache[0] < 8:
         return _status_cache[1]
 
-    last = fetch_last_event_ms()
+    db = get_db()
+    stored = get_meta(db, "last_event_ms")
+    last_ms = int(stored) if stored else None
+
+    event_ms = fetch_last_event_ms()
+    if event_ms is not None and event_ms != last_ms:
+        db.run([set_meta("last_event_ms", str(event_ms))])
+        last_ms = event_ms
+
     now_ms = int(now * 1000)
-    active = last is not None and (now_ms - last) <= get_settings().active_window_s * 1000
-    status = {"active": active, "lastEventAt": last, "serverTime": now_ms}
+    active = last_ms is not None and (now_ms - last_ms) <= settings.active_hold_s * 1000
+    status = {"active": active, "lastEventAt": last_ms, "serverTime": now_ms}
     _status_cache = (now, status)
     return status

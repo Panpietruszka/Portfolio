@@ -32,7 +32,7 @@ class Settings:
     local_db_path: str
     timezone: str
     sync_cooldown_s: int
-    active_window_s: int
+    active_hold_s: int
 
 
 def get_settings() -> Settings:
@@ -43,5 +43,5 @@ def get_settings() -> Settings:
         local_db_path=os.environ.get("LOCAL_DB_PATH", str(ROOT / "local.db")),
         timezone=os.environ.get("CODETIME_TZ", "Europe/Warsaw"),
         sync_cooldown_s=int(os.environ.get("SYNC_COOLDOWN_S", "120")),
-        active_window_s=int(os.environ.get("ACTIVE_WINDOW_S", "300")),
+        active_hold_s=int(os.environ.get("ACTIVE_HOLD_S", "60")),
     )
