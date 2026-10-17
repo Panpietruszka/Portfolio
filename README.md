@@ -57,7 +57,7 @@ Skopiuj `.env.example` do `.env` (plik jest ignorowany przez Git) i uzupełnij:
 | `TURSO_AUTH_TOKEN` | token dostępu do bazy Turso |
 | `CODETIME_TZ` | strefa czasowa (domyślnie `Europe/Warsaw`) |
 | `SYNC_COOLDOWN_S` | minimalny odstęp między synchronizacjami (domyślnie 120) |
-| `ACTIVE_WINDOW_S` | jak długo po ostatnim zdarzeniu uznajemy, że koduję (domyślnie 300) |
+| `ACTIVE_HOLD_S` | jak długo po ostatnim zauważonym zdarzeniu uznajemy, że koduję (domyślnie 60) |
 
 ## Wdrożenie
 
