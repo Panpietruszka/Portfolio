@@ -1,6 +1,7 @@
 """Kopia zapasowa bazy do pliku JSON (uruchamiana przez GitHub Actions)."""
 
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -11,6 +12,8 @@ from _lib.db import backend_name, get_db  # noqa: E402
 
 
 def main() -> None:
+    if os.environ.get("GITHUB_ACTIONS") and not os.environ.get("TURSO_DATABASE_URL", "").strip():
+        sys.exit("BŁĄD: w CI brakuje TURSO_DATABASE_URL, backup byłby pusty.")
     db = get_db()
     rows = db.query(
         "SELECT date, language, minutes FROM daily_language ORDER BY date, language"

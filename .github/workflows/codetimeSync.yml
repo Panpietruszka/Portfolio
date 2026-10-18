@@ -22,7 +22,7 @@ jobs:
       - run: pip install requests tzdata
 
       - name: Sync last days
-        run: python scripts/seedCodetime.py --days 7
+        run: python scripts/seedCodetime.py --days 7 --require-remote
         env:
           CODETIME_TOKEN: ${{ secrets.CODETIME_TOKEN }}
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
