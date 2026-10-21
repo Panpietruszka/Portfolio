@@ -63,5 +63,49 @@
         "tags": ["Typy", "Bezpieczeństwo", "Frontend"]
       }
     }
+  },
+  "activity": {
+    "eyebrow": "Aktywność",
+    "title": "Ile naprawdę koduję",
+    "dateRange": "Zakres dat",
+    "dateRangeCaption": "czas · okno",
+    "activityTitle": "Aktywność",
+    "activityCaption": "rocznie · kalendarz",
+    "timeTotal": "Czas/Razem",
+    "timeToday": "Czas/Dziś",
+    "streakCurrent": "Seria/Obecna",
+    "streakLargest": "Seria/Najdłuższa",
+    "weekdays": ["Ndz", "Pon", "Wto", "Śro", "Czw", "Pią", "Sob"],
+    "presets": {
+      "today": "Dzisiaj",
+      "thisWeek": "Ten tydzień",
+      "lastWeek": "Zeszły tydzień",
+      "thisMonth": "Ten miesiąc",
+      "lastMonth": "Zeszły miesiąc",
+      "past7": "Ostatnie 7 dni",
+      "past30": "Ostatnie 30 dni",
+      "past90": "Ostatnie 90 dni",
+      "yearToDate": "Od początku roku",
+      "allTime": "Cały czas"
+    },
+    "prev": "Poprzedni zakres",
+    "next": "Następny zakres",
+    "codingNow": "Koduję teraz",
+    "lastActive": "Ostatnio aktywny: {{when}}",
+    "trackingSince": "śledzone od {{date}}",
+    "noActivity": "Brak aktywności",
+    "error": "Nie udało się wczytać danych aktywności.",
+    "hourCount_one": "{{count}} godz.",
+    "hourCount_few": "{{count}} godz.",
+    "hourCount_many": "{{count}} godz.",
+    "hourCount_other": "{{count}} godz.",
+    "minuteCount_one": "{{count}} min",
+    "minuteCount_few": "{{count}} min",
+    "minuteCount_many": "{{count}} min",
+    "minuteCount_other": "{{count}} min",
+    "dayCount_one": "{{count}} dzień",
+    "dayCount_few": "{{count}} dni",
+    "dayCount_many": "{{count}} dni",
+    "dayCount_other": "{{count}} dnia"
   }
 }

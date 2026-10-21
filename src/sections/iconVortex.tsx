@@ -48,7 +48,6 @@ const loadImage = (src: string) =>
     img.src = src;
   });
 
-// Składa szklany kafelek z ikoną na canvasie 512x512 i robi z niego teksturę
 function makeTile(img: HTMLImageElement, anisotropy: number) {
   const size = 512;
   const canvas = document.createElement("canvas");
@@ -80,7 +79,6 @@ function makeTile(img: HTMLImageElement, anisotropy: number) {
   return map;
 }
 
-// Miękka poświata używana wokół ikon w locie
 function makeGlow() {
   const size = 256;
   const canvas = document.createElement("canvas");
@@ -104,7 +102,6 @@ function makeGlow() {
   return map;
 }
 
-// kwadratowa krzywa Béziera na jednej współrzędnej
 const bezier = (a: number, c: number, b: number, u: number) =>
   (1 - u) * (1 - u) * a + 2 * (1 - u) * u * c + u * u * b;
 
@@ -119,7 +116,6 @@ export function IconVortex() {
     const section = root.current!;
     const canvasEl = canvas.current!;
     const titleEl = title.current!;
-    // dock jest renderowany przez portal w body (position: fixed)
     const dockEl = document.querySelector<HTMLElement>("[data-dock]")!;
     const slotEls = Array.from(
       dockEl.querySelectorAll<HTMLElement>("[data-slot]"),
@@ -171,7 +167,6 @@ export function IconVortex() {
       renderer.setSize(w, h, false);
       const aspect = w / h;
       camera.aspect = aspect;
-      // na wąskich ekranach cofamy kamerę, żeby helisa się mieściła
       baseZ = VORTEX.cameraZ * clamp(1.1 / aspect, 1, 2.6);
       camera.position.z = baseZ;
       camera.updateProjectionMatrix();
@@ -198,7 +193,6 @@ export function IconVortex() {
         group.add(sprite);
         sprites.push(sprite);
 
-        // ikony z docka dostają poświatę na czas lotu
         if (dockIcons.includes(names[i])) {
           const glow = new THREE.Sprite(
             new THREE.SpriteMaterial({
@@ -216,7 +210,6 @@ export function IconVortex() {
         }
       });
 
-      // te same kafelki, które lecą w WebGL, są ikonami w HTML-owym docku
       const urls: Record<string, string> = {};
       dockIcons.forEach((id) => {
         const canvasTile = textures[names.indexOf(id)]
@@ -226,7 +219,6 @@ export function IconVortex() {
       setDockImages(urls);
     });
 
-    // pozycja i rozmiar slotu docka w przestrzeni sceny (płaszczyzna z = 0)
     const unprojected = new THREE.Vector3();
     const dir = new THREE.Vector3();
     const slotPos = new THREE.Vector3();
@@ -256,22 +248,30 @@ export function IconVortex() {
       const dt = Math.min(deltaMs, 50) / 1000;
       time += dt;
 
-      // postęp goni scroll, ale nigdy szybciej niż maxSpeed
-      const maxStep = VORTEX.maxSpeed * dt;
-      cur += clamp(
-        (target - cur) * (1 - Math.exp(-VORTEX.follow * dt)),
+      // 1. ZASADA MAKSYMALNEGO TEMPA I NIEZALEŻNEGO DOKOŃCZENIA:
+      // Wyliczamy pożądaną zmianę delta w kierunku targetu z nałożonym limitem maxSpeed.
+      const diff = target - cur;
+      const maxStep = (VORTEX.maxSpeed || 1.8) * dt;
+      const stepDelta = clamp(
+        diff * (1 - Math.exp(-VORTEX.follow * dt)),
         -maxStep,
         maxStep,
       );
-      const p = cur;
 
+      cur += stepDelta;
+
+      // Jeśli różnica jest mikroskopijna, wyrównujemy stan
+      if (Math.abs(target - cur) < 0.0001) {
+        cur = target;
+      }
+
+      const p = cur;
       const dockT = clamp((p - DOCK.start) / (DOCK.end - DOCK.start), 0, 1);
-      const docked = dockT >= 1;
+      const docked = dockT >= 0.99;
 
       titleEl.style.opacity = String(1 - smoothstep(0.04, 0.2, p));
       titleEl.style.transform = `translateY(${-smoothstep(0, 0.2, p) * 40}px)`;
 
-      // pasek docka i tytuł pojawiają się razem z lotem ikon
       const bar = Math.round(smoothstep(0.45, 1, dockT) * 1000) / 1000;
       if (bar !== lastBar) {
         lastBar = bar;
@@ -283,9 +283,9 @@ export function IconVortex() {
         setVar("--icons", docked ? "1" : "0");
       }
 
-      if (!visible || !sprites.length) return;
+      // Animujemy pętlę renderowania nawet gdy visible = false (jeśli proces lądowania 'cur' jeszcze trwa)
+      if ((!visible && Math.abs(target - cur) === 0) || !sprites.length) return;
 
-      // kamera: parallax za myszą (wygaszany na czas lotu) + najazd w trakcie lotu
       const par = 1 - smoothstep(0.1, 0.7, dockT);
       const k = 1 - Math.exp(-3 * dt);
       camera.position.x +=
@@ -321,7 +321,7 @@ export function IconVortex() {
         const x = Math.sin(a) * radius;
         const z = Math.cos(a) * radius;
 
-        const front = (Math.cos(a) + 1) / 2; // 0 = tył, 1 = przód
+        const front = (Math.cos(a) + 1) / 2;
         const edge = 1 - smoothstep(halfH * 0.7, halfH * 1.05, Math.abs(y));
         let opacity =
           (VORTEX.backOpacity + (1 - VORTEX.backOpacity) * front ** 1.3) *
@@ -335,11 +335,9 @@ export function IconVortex() {
 
         const slot = dockIndex[i];
         if (slot < 0) {
-          // pozostałe ikony rozpraszają się i gasną, gdy dock się formuje
           opacity *= fadeRest;
           sprite.position.set(x * scatter, y, z * scatter);
         } else {
-          // lądowanie od środka na boki (wachlarz)
           const rank = Math.abs(slot - (dockCount - 1) / 2) * 2;
           const tk = clamp((dockT - rank * DOCK.stagger) / span, 0, 1);
           const u = smootherstep(tk);
@@ -347,7 +345,6 @@ export function IconVortex() {
           if (slotSize !== null) {
             group.worldToLocal(slotPos);
             const side = slot % 2 === 0 ? 1 : -1;
-            // krzywa Béziera: łuk w górę, ku widzowi i lekko w bok
             const cxp = (x + slotPos.x) / 2 + side * DOCK.swing;
             const cyp = (y + slotPos.y) / 2 + DOCK.lift;
             const czp = (z + slotPos.z) / 2 + DOCK.arc;
@@ -356,7 +353,6 @@ export function IconVortex() {
               bezier(y, cyp, slotPos.y, u),
               bezier(z, czp, slotPos.z, u),
             );
-            // "wskoczenie" rozmiaru tuż przed lądowaniem
             const pop =
               1 + DOCK.pop * Math.sin(Math.PI * smoothstep(0.5, 1, u));
             size = THREE.MathUtils.lerp(size, slotSize, u) * pop;
@@ -367,7 +363,6 @@ export function IconVortex() {
           } else {
             sprite.position.set(x, y, z);
           }
-          // w docku ikonę przejmuje HTML (identyczny obraz w tym samym miejscu)
           if (docked) {
             opacity = 0;
             glowOpacity = 0;
@@ -385,7 +380,6 @@ export function IconVortex() {
         }
       });
 
-      // poświata paska docka przy lądowaniu ikon
       const glowVar =
         docked || dockT === 0 ? 0 : Math.round(landing * 100) / 100;
       if (glowVar !== lastGlow) {
@@ -402,10 +396,13 @@ export function IconVortex() {
     };
 
     const ctx = gsap.context(() => {
+      // 2. WIEKSZY EMPTY SCROLL:
+      // Powiększamy wysokość dystansu przetrzymania (np. 1.8 * VORTEX.screens),
+      // dając użytkownikowi więcej fizycznej przestrzeni przewijania na zablokowanym widoku.
       ScrollTrigger.create({
         trigger: section,
         start: "top top",
-        end: () => `+=${window.innerHeight * VORTEX.screens}`,
+        end: () => `+=${window.innerHeight * (VORTEX.screens * 1.8)}`,
         pin: true,
         invalidateOnRefresh: true,
         onUpdate: (self) => {
@@ -479,7 +476,6 @@ export function IconVortex() {
         </h2>
       </div>
 
-      {/* dock jest fixed, więc zostaje na dole strony po opuszczeniu sekcji */}
       {createPortal(
         <Dock icons={dockIcons} images={dockImages} />,
         document.body,

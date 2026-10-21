@@ -34,3 +34,10 @@ body {
     cursor: none !important;
   }
 }
+
+/* kreskowane separatory jak w dashboardzie CodeTime */
+@utility hatch {
+  background-image: repeating-linear-gradient(135deg,
+      rgb(255 255 255 / 0.08) 0 1px,
+      transparent 1px 7px);
+}

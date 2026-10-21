@@ -63,5 +63,43 @@
         "tags": ["Types", "Safety", "Frontend"]
       }
     }
+  },
+  "activity": {
+    "eyebrow": "Activity",
+    "title": "How much I actually code",
+    "dateRange": "Date Range",
+    "dateRangeCaption": "time · window",
+    "activityTitle": "Activity",
+    "activityCaption": "annual · calendar",
+    "timeTotal": "Time/Total",
+    "timeToday": "Time/Today",
+    "streakCurrent": "Streak/Current",
+    "streakLargest": "Streak/Largest",
+    "weekdays": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    "presets": {
+      "today": "Today",
+      "thisWeek": "This week",
+      "lastWeek": "Last week",
+      "thisMonth": "This month",
+      "lastMonth": "Last month",
+      "past7": "Past 7 days",
+      "past30": "Past 30 days",
+      "past90": "Past 90 days",
+      "yearToDate": "Year to date",
+      "allTime": "All time"
+    },
+    "prev": "Previous range",
+    "next": "Next range",
+    "codingNow": "Coding now",
+    "lastActive": "Last active {{when}}",
+    "trackingSince": "tracking since {{date}}",
+    "noActivity": "No activity",
+    "error": "Couldn't load activity data.",
+    "hourCount_one": "{{count}} hr",
+    "hourCount_other": "{{count}} hrs",
+    "minuteCount_one": "{{count}} min",
+    "minuteCount_other": "{{count}} mins",
+    "dayCount_one": "{{count}} day",
+    "dayCount_other": "{{count}} days"
   }
 }

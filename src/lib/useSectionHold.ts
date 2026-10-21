@@ -3,8 +3,7 @@ import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "./gsap";
 import { MOTION } from "./motion";
 
-// Przypina sekcję na chwilę, gdy jest w pełni odsłonięta, żeby dało się ją
-// spokojnie przeczytać. Sekcja musi mieć atrybut data-hold.
+// Przypina sekcję w sposób płynny i subtelny, zapobiegając agresywnemu blokowaniu scrolla.
 export function useSectionHold(
   ref: RefObject<HTMLElement | null>,
   screens = MOTION.holdScreens,
@@ -14,18 +13,21 @@ export function useSectionHold(
       const el = ref.current;
       if (!el) return;
 
+      // Zmniejszamy siłę przytrzymania do płynnego, nieinwazyjnego dystansu (np. 35-45% ekranu)
+      const holdDistance = window.innerHeight * Math.min(screens, 0.45);
+
       ScrollTrigger.create({
         trigger: el,
-        // niższa od ekranu zatrzymuje się na środku, wyższa, gdy widać jej dół
         start: () =>
           el.offsetHeight > window.innerHeight
             ? "bottom bottom"
             : "center center",
-        end: () => `+=${window.innerHeight * screens}`,
+        end: () => `+=${holdDistance}`,
         pin: true,
+        pinSpacing: true,
         anticipatePin: 1,
         invalidateOnRefresh: true,
-        refreshPriority: 10, // pin liczony przed triggerami, które od niego zależą
+        refreshPriority: 10,
       });
     },
     { scope: ref },
