@@ -13,6 +13,9 @@ from .settings import get_settings
 
 _status_cache: tuple[float, dict] | None = None
 
+# CodeTime przyjmuje limit do 90 dni, a my pobieramy o jeden więcej (odrzucamy niepełny najstarszy dzień)
+MAX_DAYS = 89
+
 
 def _today() -> datetime:
     return datetime.now(ZoneInfo(get_settings().timezone))
@@ -21,6 +24,28 @@ def _today() -> datetime:
 def last_sync_ms() -> int | None:
     value = get_meta(get_db(), "last_sync_at")
     return int(float(value) * 1000) if value is not None else None
+
+
+def aggregate(raw: list[dict]) -> dict[tuple[str, str], int]:
+    """Surowe wiersze CodeTime -> {(data, język): minuty}.
+
+    Kilka surowych nazw może dać ten sam język (np. json + jsonc), więc sumujemy.
+    """
+    totals: dict[tuple[str, str], int] = {}
+    for item in raw:
+        key = (str(item["time"]), normalize_language(str(item["by"])))
+        totals[key] = totals.get(key, 0) + int(item["duration"])
+    return totals
+
+def fetch_window(days: int) -> dict[tuple[str, str], int]:
+    """Ostatnie `days` PEŁNYCH dni (dziś włącznie), jako {(data, język): minuty}.
+
+    CodeTime liczy okno kroczące od chwili zapytania, więc najstarszy zwrócony dzień
+    jest niepełny. Pobieramy o dzień więcej i go odrzucamy.
+    """
+    start = days_back(days - 1)
+    totals = aggregate(fetch_language_days(days + 1))
+    return {key: minutes for key, minutes in totals.items() if key[0] >= start}
 
 
 def sync_recent(days: int, *, force: bool = False) -> dict:
@@ -36,18 +61,14 @@ def sync_recent(days: int, *, force: bool = False) -> dict:
     last = get_meta(db, "last_sync_at")
     if not force and last is not None and now - float(last) < settings.sync_cooldown_s:
         return {"synced": False, "updatedAt": int(float(last) * 1000)}
-
-    raw = fetch_language_days(max(1, min(days, 90)))
-
-    # kilka surowych nazw może dać ten sam język (np. json + jsonc), więc sumujemy
-    totals: dict[tuple[str, str], int] = {}
-    for item in raw:
-        key = (str(item["time"]), normalize_language(str(item["by"])))
-        totals[key] = totals.get(key, 0) + int(item["duration"])
+    days = max(1, min(days, MAX_DAYS))
+    totals = fetch_window(days)
 
     statements = []
     if totals:
-        first = min(date for date, _ in totals)
+        # okno obejmuje też dni z zakresu, dla których CodeTime nie zwróciło już nic,
+        # więc nieaktualne wpisy znikają z bazy (lustro tego, co widać w CodeTime)
+        first = days_back(days - 1)
         last_day = max(max(date for date, _ in totals), _today().date().isoformat())
         # okno od najstarszego zwróconego dnia do dziś jest zastępowane w całości,
         # dzięki czemu poprawki po stronie CodeTime trafiają też do nas
