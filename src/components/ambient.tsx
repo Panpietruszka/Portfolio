@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { gsap, ScrollTrigger } from "../lib/gsap";
+import { stage, hooks, INTRO_PLAYS, INTRO_PATH } from "../lib/intro";
 
 const COLORS = {
   violet: "124 92 255",
@@ -124,6 +125,7 @@ const LITE =
 // ---------- pomocnicze ----------
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+const smooth = (t: number) => t * t * (3 - 2 * t);
 
 // Radialny gradient o gaussowskim spadku jasności: zero na krawędzi, brak pasm i krawędzi
 function glow(rgb: string, alpha: number, stops = 16): string {
@@ -239,6 +241,7 @@ export function Ambient() {
   const haloRef = useRef<HTMLDivElement>(null);
   const grainRef = useRef<HTMLDivElement>(null);
   const dustRef = useRef<HTMLCanvasElement>(null);
+  const shadeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const rootEl = root.current;
@@ -288,7 +291,9 @@ export function Ambient() {
     const halo = makeMass(start.x, start.y);
     const par = { x: 0, y: 0 };
     const scroll = { p: 0, target: 0, v: 0, ready: false };
-    const intro = { v: 0 };
+    const shadeEl = shadeRef.current;
+    let lastGrain = "";
+    let lastShade = "";
     const weights = LIGHT.map(() => 0);
     const shown = LIGHT.map(() => -1);
     const motes = dustOn ? makeDust(DUST.count) : [];
@@ -372,12 +377,30 @@ export function Ambient() {
         (1 - Math.exp(-dt * (wantsPointer ? 6 : 1.4)));
       const eased = follow * follow * (3 - 2 * follow);
       const w = wander(time);
-      const tx = calm ? (hasPointer ? px : view.w * 0.3) : lerp(w.x, px, eased);
-      const ty = calm
-        ? hasPointer
-          ? py
-          : view.h * 0.35
-        : lerp(w.y, py, eased);
+            let tx = calm
+              ? hasPointer
+                ? px
+                : view.w * 0.3
+              : lerp(w.x, px, eased);
+            let ty = calm
+              ? hasPointer
+                ? py
+                : view.h * 0.35
+              : lerp(w.y, py, eased);
+
+            // intro: scenariusz przejmuje światło, potem płynnie je oddaje
+            if (stage.script > 0.001) {
+              tx = lerp(
+                tx,
+                sample(INTRO_PATH.x, stage.path) * view.w,
+                stage.script,
+              );
+              ty = lerp(
+                ty,
+                sample(INTRO_PATH.y, stage.path) * view.h,
+                stage.script,
+              );
+            }
 
       // 3. sprężyny o różnej bezwładności
       if (calm) {
@@ -396,27 +419,29 @@ export function Ambient() {
       // 4. energia ruchu (szybki ruch myszą lub scroll lekko powiększają i rozjaśniają światło)
       const speed = Math.hypot(core.vx, core.vy);
       energy += (clamp01(speed / 1800) - energy) * (1 - Math.exp(-dt * 5));
-      const lift = Math.max(energy, vel * 0.6);
-      const reveal = intro.v;
-      const grow = 0.7 + 0.3 * reveal;
-      place(
-        tightEl,
-        tight,
-        grow * (1 + 0.1 * lift),
-        reveal * (0.8 + 0.4 * lift),
-      );
-      place(
-        coreEl,
-        core,
-        grow * (1 + 0.14 * lift),
-        reveal * (0.85 + 0.25 * lift),
-      );
-      place(
-        haloEl,
-        halo,
-        grow * (1 + 0.05 * lift),
-        reveal * (0.92 + 0.12 * lift),
-      );
+            const lift = Math.max(energy, vel * 0.6, stage.boost);
+            const reveal = stage.light;
+            const grow = 0.7 + 0.3 * reveal;
+            // różne wykładniki: iskra rośnie pierwsza, halo doganiają na końcu (bloom)
+            const sz = stage.size;
+            place(
+              tightEl,
+              tight,
+              grow * sz ** 0.55 * (1 + 0.1 * lift),
+              reveal * (0.8 + 0.4 * lift),
+            );
+            place(
+              coreEl,
+              core,
+              grow * sz * (1 + 0.14 * lift),
+              reveal * (0.85 + 0.25 * lift),
+            );
+            place(
+              haloEl,
+              halo,
+              grow * sz ** 1.7 * (1 + 0.05 * lift),
+              reveal * (0.92 + 0.12 * lift),
+            );
 
       // 5. barwa światła zależy od pozycji i bardzo wolno dryfuje w czasie
       const nx = clamp01(core.x / view.w + 0.12 * Math.sin(time * 0.11));
@@ -469,80 +494,106 @@ export function Ambient() {
           ox = -par.x * b.depth * TUNING.parallax;
           oy = -par.y * b.depth * TUNING.parallax;
         }
-        const x = (sample(b.x, scroll.p) / 100) * view.w + dx + ox;
-        const y = (sample(b.y, scroll.p) / 100) * view.h + dy + oy;
+        // intro: każda plama startuje ze środka światła i płynie na swoje miejsce (z opóźnieniem)
+        const e = smooth(clamp01(stage.bloom * 1.6 - i * 0.12));
+        const half = (b.size * Math.max(view.w, view.h)) / 200;
+        const x = lerp(
+          core.x - half,
+          (sample(b.x, scroll.p) / 100) * view.w + dx + ox,
+          e,
+        );
+        const y = lerp(
+          core.y - half,
+          (sample(b.y, scroll.p) / 100) * view.h + dy + oy,
+          e,
+        );
+        const born = lerp(0.3, 1, e);
         const stretch = breathing * (1 + 0.1 * vel);
         const el = blobEls[i];
-        el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) scale(${breathing.toFixed(4)}, ${stretch.toFixed(4)})`;
+        el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) scale(${(breathing * born).toFixed(4)}, ${(stretch * born).toFixed(4)})`;
         el.style.opacity = clamp01(
-          sample(b.o, scroll.p) * flicker * (1 + 0.12 * vel),
+          sample(b.o, scroll.p) * flicker * (1 + 0.12 * vel) * e,
         ).toFixed(3);
-      });
-      if (stageEl) {
-        stageEl.style.opacity = alive
-          ? (0.85 + 0.15 * Math.sin(time * 0.35)).toFixed(3)
-          : "1";
-      }
+        if (stageEl) {
+          stageEl.style.opacity = alive
+            ? (0.85 + 0.15 * Math.sin(time * 0.35)).toFixed(3)
+            : "1";
+        }
 
-      // 7. pył rozświetlany przez światło
-      if (dustOn && dustCtx) {
-        dustCtx.clearRect(0, 0, view.w, view.h);
-        let mr = 0;
-        let mg = 0;
-        let mb = 0;
-        weights.forEach((weight, i) => {
-          mr += LIGHT_RGB[i][0] * weight;
-          mg += LIGHT_RGB[i][1] * weight;
-          mb += LIGHT_RGB[i][2] * weight;
-        });
-        const cr = Math.round(lerp(235, mr, 0.45));
-        const cg = Math.round(lerp(235, mg, 0.45));
-        const cb = Math.round(lerp(238, mb, 0.45));
+        // 7. pył rozświetlany przez światło
+        if (dustOn && dustCtx) {
+          dustCtx.clearRect(0, 0, view.w, view.h);
+          let mr = 0;
+          let mg = 0;
+          let mb = 0;
+          weights.forEach((weight, i) => {
+            mr += LIGHT_RGB[i][0] * weight;
+            mg += LIGHT_RGB[i][1] * weight;
+            mb += LIGHT_RGB[i][2] * weight;
+          });
+          const cr = Math.round(lerp(235, mr, 0.45));
+          const cg = Math.round(lerp(235, mg, 0.45));
+          const cb = Math.round(lerp(238, mb, 0.45));
 
-        for (const m of motes) {
-          const drift = DUST.speed * m.z * time;
-          let x = m.x * view.w + m.dx * drift - par.x * m.z * 38;
-          let y =
-            m.y * view.h +
-            m.dy * drift -
-            scroll.p * view.h * 2.4 * m.z -
-            par.y * m.z * 38;
-          x = ((x % view.w) + view.w) % view.w;
-          y = ((y % view.h) + view.h) % view.h;
+          for (const m of motes) {
+            const drift = DUST.speed * m.z * time;
+            let x = m.x * view.w + m.dx * drift - par.x * m.z * 38;
+            let y =
+              m.y * view.h +
+              m.dy * drift -
+              scroll.p * view.h * 2.4 * m.z -
+              par.y * m.z * 38;
+            x = ((x % view.w) + view.w) % view.w;
+            y = ((y % view.h) + view.h) % view.h;
 
-          const d = Math.hypot(x - core.x, y - core.y);
-          const lit = Math.exp(-((d / DUST.lightRadius) ** 2) * 1.6);
-          const twinkle = 0.65 + 0.35 * Math.sin(time * m.rate + m.phase);
-          const a = clamp01(
-            (DUST.idle * (0.4 + 0.6 * m.z) + DUST.lit * lit) * twinkle * reveal,
-          );
-          if (a < 0.012) continue;
+            const d = Math.hypot(x - core.x, y - core.y);
+            const lit = Math.exp(-((d / DUST.lightRadius) ** 2) * 1.6);
+            const twinkle = 0.65 + 0.35 * Math.sin(time * m.rate + m.phase);
+            const a = clamp01(
+              (DUST.idle * (0.4 + 0.6 * m.z) * stage.dust +
+                DUST.lit * lit * (1 + 0.6 * (1 - stage.dust))) *
+                twinkle *
+                reveal,
+            );
+            if (a < 0.012) continue;
 
-          dustCtx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${a.toFixed(3)})`;
-          dustCtx.beginPath();
-          dustCtx.arc(x, y, m.size, 0, Math.PI * 2);
-          dustCtx.fill();
-          if (m.z > 0.7 && lit > 0.15) {
-            // większe drobinki w świetle dostają miękką poświatę
-            dustCtx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${(a * 0.16).toFixed(3)})`;
+            dustCtx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${a.toFixed(3)})`;
             dustCtx.beginPath();
-            dustCtx.arc(x, y, m.size * 3.2, 0, Math.PI * 2);
+            dustCtx.arc(x, y, m.size, 0, Math.PI * 2);
             dustCtx.fill();
+            if (m.z > 0.7 && lit > 0.15) {
+              // większe drobinki w świetle dostają miękką poświatę
+              dustCtx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${(a * 0.16).toFixed(3)})`;
+              dustCtx.beginPath();
+              dustCtx.arc(x, y, m.size * 3.2, 0, Math.PI * 2);
+              dustCtx.fill();
+            }
           }
         }
-      }
 
-      // 8. ziarno filmowe: stała sekwencja w tempie ok. 11 klatek na sekundę
-      if (!calm) {
-        grainClock += dt;
-        if (grainClock > 0.09) {
-          grainClock = 0;
-          grainIndex = (grainIndex + 3) % GRAIN_STEPS.length;
-          const [gx, gy] = GRAIN_STEPS[grainIndex];
-          grainEl.style.transform = `translate3d(${gx}px, ${gy}px, 0)`;
+        // 8. ziarno filmowe: stała sekwencja w tempie ok. 11 klatek na sekundę
+        if (!calm) {
+          grainClock += dt;
+          if (grainClock > 0.09) {
+            grainClock = 0;
+            grainIndex = (grainIndex + 3) % GRAIN_STEPS.length;
+            const [gx, gy] = GRAIN_STEPS[grainIndex];
+            grainEl.style.transform = `translate3d(${gx}px, ${gy}px, 0)`;
+          }
         }
-      }
-    };
+
+        // 9. intro: mocniejsze ziarno i zamknięta winieta na starcie
+        const grainOpacity = (0.1 + 0.12 * stage.grain).toFixed(3);
+        if (grainOpacity !== lastGrain) {
+          lastGrain = grainOpacity;
+          grainEl.style.opacity = grainOpacity;
+        }
+        const shade = stage.vignette.toFixed(3);
+        if (shadeEl && shade !== lastShade) {
+          lastShade = shade;
+          shadeEl.style.opacity = shade;
+        }
+  })};
 
     const onMove = (event: PointerEvent) => {
       if (event.pointerType === "touch") return;
@@ -559,15 +610,15 @@ export function Ambient() {
       view.h = window.innerHeight;
       sizeDust();
     };
-    // fala światła przy kliknięciu, w kolorze aktualnego światła
-    const onDown = (event: PointerEvent) => {
+
+    const firePulse = (x: number, y: number, strength = 0.5) => {
       if (calm || pulses.length === 0) return;
       const el = pulses[pulseIndex++ % pulses.length];
       const dominant = weights.indexOf(Math.max(...weights));
-      el.style.background = glow(LIGHT[dominant].rgb, 0.5);
+      el.style.background = glow(LIGHT[dominant].rgb, strength);
       gsap.fromTo(
         el,
-        { x: event.clientX, y: event.clientY, scale: 0.12, opacity: 0.8 },
+        { x, y, scale: 0.12, opacity: 0.8 },
         {
           scale: 1,
           opacity: 0,
@@ -577,6 +628,10 @@ export function Ambient() {
         },
       );
     };
+
+    const onDown = (event: PointerEvent) =>
+      firePulse(event.clientX, event.clientY);
+    hooks.pulse = firePulse;
 
     const trigger = ScrollTrigger.create({
       trigger: document.documentElement,
@@ -597,17 +652,6 @@ export function Ambient() {
 
     // pierwsza klatka jest ustawiona zanim cokolwiek zobaczysz, potem tło wyłania się płynnie
     tick(0, 16);
-    const fade = gsap.fromTo(
-      rootEl,
-      { opacity: 0 },
-      { opacity: 1, duration: 1.6, ease: "power2.out" },
-    );
-    const introTween = gsap.to(intro, {
-      v: 1,
-      duration: 2.4,
-      delay: 0.3,
-      ease: "power2.out",
-    });
 
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerdown", onDown);
@@ -621,8 +665,7 @@ export function Ambient() {
       window.removeEventListener("resize", onResize);
       document.documentElement.removeEventListener("pointerleave", onLeave);
       trigger.kill();
-      fade.kill();
-      introTween.kill();
+      hooks.pulse = undefined;
     };
   }, []);
 
@@ -632,7 +675,7 @@ export function Ambient() {
     <div
       ref={root}
       className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
-      style={{ backgroundColor: BASE, opacity: 0 }}
+      style={{ backgroundColor: BASE }}
     >
       {/* baza: ciemny gradient, żeby czerń nie była płaska */}
       <div
@@ -749,6 +792,17 @@ export function Ambient() {
           }}
         />
       ))}
+
+      {/* winieta intro: zamknięta na starcie, otwiera się razem ze światłem */}
+      <div
+        ref={shadeRef}
+        className="absolute inset-0"
+        style={{
+          opacity: INTRO_PLAYS ? 1 : 0,
+          background:
+            "radial-gradient(ellipse at 50% 45%, transparent 6%, rgb(0 0 0 / 0.94) 72%)",
+        }}
+      />
 
       {/* winieta */}
       <div
