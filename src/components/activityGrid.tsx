@@ -13,6 +13,7 @@ import {
   type Range,
 } from "../lib/activity";
 import { formatMinutes } from "../lib/formatTime";
+import { LanguageRow } from "./languageRow";
 
 type CellsProps = {
   weeks: (string | null)[][];
@@ -240,11 +241,13 @@ export function ActivityGrid({ weeks, byDate, range, weekdays }: Props) {
             </div>
             {entry && (
               <div className="mt-2 space-y-0.5 font-mono text-[11px] text-white/60">
-                {topLanguages(entry, 3).map(([language, minutes]) => (
-                  <div key={language} className="flex justify-between gap-3">
-                    <span>{language}</span>
-                    <span>{formatMinutes(minutes, t)}</span>
-                  </div>
+                {topLanguages(entry, 3).map(([language, minutes], index) => (
+                  <LanguageRow
+                    key={`${tipDate}-${language}`}
+                    language={language}
+                    value={formatMinutes(minutes, t)}
+                    index={index}
+                  />
                 ))}
               </div>
             )}
