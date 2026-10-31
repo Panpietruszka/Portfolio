@@ -64,6 +64,19 @@
       }
     }
   },
+  "projects": {
+    "eyebrow": "Projects",
+    "title": "Selected work",
+    "alt": "Screenshot of {{name}}",
+    "items": {
+      "skycast": {
+        "summary": "Weather and space data aggregator for web and mobile."
+      },
+      "portfolio": {
+        "summary": "This site: scroll-driven animation, a live coding activity feed and a FastAPI backend."
+      }
+    }
+  },
   "activity": {
     "eyebrow": "Activity",
     "title": "How much I actually code",
@@ -94,6 +107,7 @@
     "lastActive": "Last active {{when}}",
     "trackingSince": "tracking since {{date}}",
     "noActivity": "No activity",
+    "outOfRange": "Outside selected range",
     "error": "Couldn't load activity data.",
     "hourCount_one": "{{count}} hr",
     "hourCount_other": "{{count}} hrs",

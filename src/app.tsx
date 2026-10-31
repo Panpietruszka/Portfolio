@@ -5,6 +5,7 @@ import { Hero } from "./sections/hero";
 import { About } from "./sections/about";
 import { IconVortex } from "./sections/iconVortex";
 import { CodeTime } from "./sections/codeTime";
+import { Projects } from "./sections/projects";
 import { useSmoothScroll } from "./lib/useSmoothScroll";
 import {
   INTRO_PLAYS,
@@ -42,6 +43,7 @@ export default function App() {
         <About />
         <IconVortex />
         <CodeTime />
+        <Projects />
       </main>
     </>
   );

@@ -64,6 +64,19 @@
       }
     }
   },
+  "projects": {
+    "eyebrow": "Projekty",
+    "title": "Wybrane prace",
+    "alt": "Zrzut ekranu projektu {{name}}",
+    "items": {
+      "skycast": {
+        "summary": "Agregator danych pogodowych i kosmicznych na web i mobile."
+      },
+      "portfolio": {
+        "summary": "Ta strona: animacje sterowane scrollem, aktywność z CodeTime i backend we FastAPI."
+      }
+    }
+  },
   "activity": {
     "eyebrow": "Aktywność",
     "title": "Ile naprawdę koduję",
@@ -94,6 +107,7 @@
     "lastActive": "Ostatnio aktywny: {{when}}",
     "trackingSince": "śledzone od {{date}}",
     "noActivity": "Brak aktywności",
+    "outOfRange": "Poza wybranym zakresem",
     "error": "Nie udało się wczytać danych aktywności.",
     "hourCount_one": "{{count}} godz.",
     "hourCount_few": "{{count}} godz.",
