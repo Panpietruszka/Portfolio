@@ -15,6 +15,16 @@ import {
 import { formatMinutes } from "../lib/formatTime";
 import { LanguageRow } from "./languageRow";
 
+// Siatka ukryta przez Fade (opacity bliskie 0) nie może pokazywać dymka
+function visibleEnough(el: HTMLElement | null): boolean {
+  let opacity = 1;
+  for (let node = el; node && node !== document.body; node = node.parentElement) {
+    opacity *= parseFloat(getComputedStyle(node).opacity);
+    if (opacity < 0.5) return false;
+  }
+  return true;
+}
+
 type CellsProps = {
   weeks: (string | null)[][];
   byDate: Map<string, DayEntry>;
@@ -64,6 +74,7 @@ export function ActivityGrid({ weeks, byDate, range, weekdays }: Props) {
   const contentRef = useRef<HTMLDivElement>(null);
   const tipVisible = useRef(false);
   const [tipDate, setTipDate] = useState<string | null>(null);
+  const inRange = !!tipDate && tipDate >= range.from && tipDate <= range.to;
 
   useEffect(() => {
     const el = scroller.current;
@@ -110,6 +121,23 @@ export function ActivityGrid({ weeks, byDate, range, weekdays }: Props) {
     gsap.set(el, { xPercent: -50, yPercent: -100, opacity: 0, scale: 0.92 });
   }, []);
 
+  // przy przewijaniu dymek znika, bo kafelek pod kursorem się zmienia
+  useEffect(() => {
+    const onScroll = () => {
+      if (!tipVisible.current) return;
+      tipVisible.current = false;
+      gsap.to(tip.current, {
+        opacity: 0,
+        scale: 0.92,
+        duration: 0.18,
+        ease: "power2.in",
+        overwrite: "auto",
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   // Luksusowa animacja zmiany wysokości karty oraz miękkiego wyłaniania się wartości
   useLayoutEffect(() => {
     const container = tip.current;
@@ -133,7 +161,7 @@ export function ActivityGrid({ weeks, byDate, range, weekdays }: Props) {
       { opacity: 0.5, y: 3 },
       { opacity: 1, y: 0, duration: 0.25, ease: "power2.out" },
     );
-  }, [tipDate]);
+  }, [tipDate, inRange]);
 
   const hide = () => {
     if (!tipVisible.current) return;
@@ -152,7 +180,7 @@ export function ActivityGrid({ weeks, byDate, range, weekdays }: Props) {
       "[data-date]",
     );
     const el = tip.current;
-    if (!cell || !el) {
+    if (!cell || !el || !visibleEnough(grid.current)) {
       hide();
       return;
     }
@@ -186,9 +214,9 @@ export function ActivityGrid({ weeks, byDate, range, weekdays }: Props) {
     }
 
     setTipDate(cell.dataset.date ?? null);
-  };
+  };;
 
-  const entry = tipDate ? byDate.get(tipDate) : undefined;
+  const entry = tipDate && inRange ? byDate.get(tipDate) : undefined;
   const dateLabel = tipDate
     ? new Intl.DateTimeFormat(i18n.language, {
         weekday: "short",
@@ -237,7 +265,15 @@ export function ActivityGrid({ weeks, byDate, range, weekdays }: Props) {
           <div ref={contentRef} className="px-3 py-2.5">
             <div className="text-[11px] text-white/50">{dateLabel}</div>
             <div className="mt-1 text-sm font-medium">
-              {entry ? formatMinutes(entry.total, t) : t("activity.noActivity")}
+              {!inRange ? (
+                <span className="text-white/45">
+                  {t("activity.outOfRange")}
+                </span>
+              ) : entry ? (
+                formatMinutes(entry.total, t)
+              ) : (
+                t("activity.noActivity")
+              )}
             </div>
             {entry && (
               <div className="mt-2 space-y-0.5 font-mono text-[11px] text-white/60">
